@@ -1,10 +1,7 @@
 <template>
-  <div class="p-4 flex flex-col">
+  <div class="h-screen gradient-bg">
     <!-- 加载状态，居中显示loadingMessage -->
-    <div
-      v-if="isLoading && loadingMessage"
-      class="flex justify-center items-center h-screen"
-    >
+    <div v-if="isLoading && loadingMessage" class="flex h-screen justify-center items-center">
       <div class="animate-pulse text-3xl font-bold text-center text-blue-800">
         {{ loadingMessage }}
         <span class="loading-animation"></span>
@@ -15,8 +12,13 @@
       {{ error }}
     </div>
 
-    <div v-else class="p-4 w-3/5 border border-gray-200 rounded-lg">
-      {{ text }}
+    <div v-else class="relative flex-row p-10 w-full">
+      <div class="text-lg font-bold mb-4">关键字</div>
+      <div class="text-lg font-bold mb-4">内容概要</div>
+      <div class="text-lg font-bold mb-4">原文</div>
+      <div class="flex-grow p-4 rounded-lg text-gradient-bg overflow-auto h-4/5">
+        {{ text }}
+      </div>
     </div>
   </div>
 </template>
@@ -43,8 +45,6 @@ export default {
           this.isLoading = false
           this.clearTimer() // 获取到结果后清除定时器
         } else if (response.data.code === 100001) {
-          // this.loadingMessage = '音视频文件转写中，请稍等'
-          // 如果之前没有设置定时器，则设置一个新的定时器
           this.clearTimer()
           this.timer = setTimeout(() => {
             this.fetchTranscript(taskId)
@@ -67,9 +67,11 @@ export default {
   },
   beforeUnmount() {
     // 组件销毁前清除定时器
+    document.body.style.overflowY = '' // 重新启用垂直滚动
     this.clearTimer()
   },
   mounted() {
+    document.body.style.overflowY = 'hidden' // 禁用垂直滚动
     const taskId = this.$route.params.task_id
     if (taskId) {
       this.loadingMessage = '音视频文件转写中，请稍等'
@@ -85,17 +87,19 @@ export default {
 <style scoped>
 /* 在这里添加您的样式 */
 @keyframes dots {
-  0%, 20% {
-    content: "";
+  0%,
+  20% {
+    content: '';
   }
   40% {
-    content: ".";
+    content: '.';
   }
   60% {
-    content: "..";
+    content: '..';
   }
-  80%, 100% {
-    content: "...";
+  80%,
+  100% {
+    content: '...';
   }
 }
 
@@ -107,7 +111,7 @@ export default {
   animation: dots 1.5s steps(1, end) infinite;
 }
 .loading-animation:after {
-  content: "";
+  content: '';
   animation: dots 1.5s steps(1, end) infinite;
 }
 </style>

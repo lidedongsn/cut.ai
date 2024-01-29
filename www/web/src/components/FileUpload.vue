@@ -78,7 +78,8 @@ export default {
             this.uploadProgress = parseInt(
               Math.round((progressEvent.loaded * 100) / progressEvent.total)
             )
-          }
+          },
+          timeout: 6000000
         })
         if (response.status !== 200) {
           throw new Error('上传失败！')
