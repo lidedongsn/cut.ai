@@ -12,8 +12,9 @@
       />
       <!-- 自定义的矩形框，用于触发文件选择 -->
       <span
-        class="block w-full px-4 py-2 border border-dashed border-gray-300 rounded-md cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors duration-300 h-16"
+        class="truncate block w-full px-4 py-2 border border-dashed border-gray-300 rounded-md cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors duration-300 h-16"
         @click="triggerFileInput"
+        :title="selectedFileName"
       >
         <!-- 显示选择的文件名，如果没有文件，则显示默认文本 -->
         {{ selectedFileName || '选择音视频文件' }}

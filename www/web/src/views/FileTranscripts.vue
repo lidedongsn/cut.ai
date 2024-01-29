@@ -41,7 +41,7 @@ export default {
       try {
         const response = await this.$axios.get(`/api/stt-progress/${taskId}`)
         if (response.data.code === 200) {
-          this.text = response.data.data.result.text
+          this.text = response.data.data.text
           this.isLoading = false
           this.clearTimer() // 获取到结果后清除定时器
         } else if (response.data.code === 100001) {
