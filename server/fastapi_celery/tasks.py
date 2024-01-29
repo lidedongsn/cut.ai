@@ -111,7 +111,7 @@ def process_file_celery(self, file_id):
 
         self.update_state(
             state="SUCCESS",
-            meta={"process": "completed", "file_id": file_id, "text": text},
+            meta={"process": "completed", "file_id": file_id},
         )
     except Exception as e:
         logger.exception(e)  # 使用 loguru 记录异常

@@ -77,11 +77,13 @@ async def get_stt_result(task_id: str):
         logger.info(f"获取任务结果：{task_id}")
         task = await get_stt_progress(task_id)
         if task.state == "SUCCESS":
-            result = task.get()
+            task_info = sync_redis.get_stt_task(task_id)
             
-            return JSONResponse(content={"code": 200, "message": "文件处理完成", "data": {"task_id": task_id, "result": result}})
+            if task_info is None:
+                return JSONResponse(content={"code": 110001, "message": "文件处理失败", "data": {"task_id": task_id}})  
+            return JSONResponse(content={"code": 200, "message": "文件处理完成", "data": {"task_id": task_id, "text": task_info["text"]}})
         elif task.state == "FAILURE":
-            raise JSONResponse(content={"code": 110001, "message": "文件处理失败", "data": {"task_id": task_id}})
+            return JSONResponse(content={"code": 110001, "message": "文件处理失败", "data": {"task_id": task_id}})
         else:
             return JSONResponse(content={"code": 100001, "message": "文件处理中", "data": {"task_id": task_id}})
     except Exception as e:
