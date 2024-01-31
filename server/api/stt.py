@@ -74,15 +74,13 @@ async def stt_task(file_id: str = Form(...)):
 @router.get("/stt-progress/{task_id}")
 async def get_stt_result(task_id: str):
     try:
-        logger.info(f"获取任务结果：{task_id}")
-        task = await get_stt_progress(task_id)
-        if task.state == "SUCCESS":
-            task_info = sync_redis.get_stt_task(task_id)
-            
-            if task_info is None:
-                return JSONResponse(content={"code": 110001, "message": "文件处理失败", "data": {"task_id": task_id}})  
-            return JSONResponse(content={"code": 200, "message": "文件处理完成", "data": {"task_id": task_id, "text": task_info["text"]}})
-        elif task.state == "FAILURE":
+        task_info = sync_redis.get_stt_task(task_id)
+        logger.info(f"获取任务结果：{task_info}")
+        if task_info is None:
+            return JSONResponse(content={"code": 404, "message": "任务不存在"})
+        if task_info["state"] == "SUCCESS" :
+            return JSONResponse(content={"code": 200, "message": "文件处理完成", "data": {"task_id": task_id, "text": task_info["text"], "file_name":task_info["file_name"]}})
+        elif task_info["state"] == "FAILURE":
             return JSONResponse(content={"code": 110001, "message": "文件处理失败", "data": {"task_id": task_id}})
         else:
             return JSONResponse(content={"code": 100001, "message": "文件处理中", "data": {"task_id": task_id}})
