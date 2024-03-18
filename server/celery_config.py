@@ -10,7 +10,9 @@ port = REDIS_CONFIG["port"]
 password = REDIS_CONFIG["password"]
 database = REDIS_CONFIG["database"]
 app = Celery(
-    "whisper_worker", broker=f"redis://:{password}@{host}:{port}/{database}", include=["fastapi_celery.tasks"]
+    "whisper_worker",
+    broker=f"redis://:{password}@{host}:{port}/{database}",
+    include=["fastapi_celery.tasks"],
 )
 # 配置 Celery 使用 Redis 作为结果后端
 app.conf.result_backend = f"redis://:{password}@{host}:{port}/{database}"
