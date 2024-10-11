@@ -15,6 +15,10 @@ cut.ai 是一个AI音视频剪辑工具，语音转写基于whisper
 ### Server
 
 ``` shell
+
+```
+
+``` shell
 uvicorn main:app --reload --host 0.0.0.0 --port 5001
 ```
 

@@ -8,7 +8,7 @@ print(sys.path)
 host = REDIS_CONFIG["host"]
 port = REDIS_CONFIG["port"]
 password = REDIS_CONFIG["password"]
-database = REDIS_CONFIG["database"]
+database = REDIS_CONFIG["db"]
 app = Celery(
     "whisper_worker",
     broker=f"redis://:{password}@{host}:{port}/{database}",

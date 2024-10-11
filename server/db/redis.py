@@ -9,7 +9,7 @@ class RedisHandler:
         self,
         host=REDIS_CONFIG["host"],
         port=REDIS_CONFIG["port"],
-        db=REDIS_CONFIG["database"],
+        db=REDIS_CONFIG["db"],
         password=REDIS_CONFIG["password"],
     ):
         self.host = host
