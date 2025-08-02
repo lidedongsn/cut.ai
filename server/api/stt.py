@@ -2,7 +2,7 @@ import datetime
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi import Form
-from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy import VideoFileClip, AudioFileClip
 from loguru import logger
 import os
 from datetime import datetime

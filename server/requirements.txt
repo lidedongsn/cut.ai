@@ -1,0 +1,8 @@
+celery==5.5.3
+fastapi==0.116.1
+loguru==0.7.3
+moviepy==2.2.1
+openai_whisper==20250625
+PyYAML==6.0.2
+PyYAML==6.0.2
+whisper==1.1.10

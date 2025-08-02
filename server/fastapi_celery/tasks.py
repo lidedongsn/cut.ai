@@ -8,7 +8,7 @@ import time
 from db.redis import RedisHandler
 from whisper.utils import get_writer
 import wave
-from moviepy.editor import VideoFileClip
+from moviepy import VideoFileClip
 
 sync_redis = RedisHandler()
 
@@ -73,7 +73,7 @@ def process_file_celery(self, file_id):
                 "process": "loading_model",
             },
         )
-        model_name = "large-v3"
+        model_name = "small"
         model = load_model(model_name)
         T1 = time.time()
         logger.info(f"加载模型耗时：{T1-T0}秒")

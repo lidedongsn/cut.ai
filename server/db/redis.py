@@ -14,7 +14,7 @@ class RedisHandler:
     ):
         self.host = host
         self.port = port
-        self.db = db
+        self.db = db | 0
         self.password = password
         self.redis_pool = None
         self.redis_client = None
@@ -23,6 +23,8 @@ class RedisHandler:
         self.connect()
 
     def connect(self):
+        print(REDIS_CONFIG)
+        logger.info("load redis config", REDIS_CONFIG)
         self.redis_pool = redis.ConnectionPool.from_url(
             f"redis://{self.host}:{self.port}/{self.db}",
             password=self.password,

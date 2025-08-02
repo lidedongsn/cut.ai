@@ -33,7 +33,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://172.23.167.100:3002"],  # 允许的源列表，可以使用 ['*'] 来允许所有源
+    allow_origins=["*"],  # 允许的源列表，可以使用 ['*'] 来允许所有源
     allow_credentials=True,
     allow_methods=["*"],  # 允许的方法列表，['*'] 表示允许所有 HTTP 方法
     allow_headers=["*"],  # 允许的头信息列表，['*'] 表示允许所有头
