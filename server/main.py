@@ -1,4 +1,4 @@
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.stt import router as stt
@@ -9,7 +9,10 @@ import sys
 
 # 配置Loguru日志器，添加控制台和文件输出
 # logger.add("logs/cutai_{time}.log", rotation="1 day")  # 每天轮换日志文件
-logger.add(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")  # 控制台输出
+logger.add(
+    sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO"
+)  # 控制台输出
+
 
 # 创建日志实例
 class InterceptHandler(logging.Handler):
@@ -57,18 +60,21 @@ async def on_shutdown():
 app.router.add_event_handler("startup", on_startup)
 app.router.add_event_handler("shutdown", on_shutdown)
 
+
 # 定义中间件
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     # 请求开始时记录
     logger.info(f"请求开始: {request.method} {request.url}")
     start_time = time.time()
-    
+
     # 处理请求
     response = await call_next(request)
-    
+
     # 请求结束时记录
     process_time = (time.time() - start_time) * 1000
-    logger.info(f"请求结束: {request.method} {request.url} 完成于 {process_time}ms 状态码: {response.status_code}")
-    
+    logger.info(
+        f"请求结束: {request.method} {request.url} 完成于 {process_time}ms 状态码: {response.status_code}"
+    )
+
     return response

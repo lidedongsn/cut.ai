@@ -56,7 +56,11 @@ async def file_upload(file: UploadFile = File(...)):
         sync_redis.add_file(file_id, file_info)
 
         return JSONResponse(
-            content={"code": 200, "message": "文件上传成功", "data": {"file_id": file_id}}
+            content={
+                "code": 200,
+                "message": "文件上传成功",
+                "data": {"file_id": file_id},
+            }
         )
     except Exception as e:
         logger.exception(e)  # 使用 loguru 记录异常
@@ -71,7 +75,11 @@ async def stt_task(file_id: str = Form(...)):
         logger.info(f"开始处理文件：{file_id}")
         task = process_file_celery.delay(file_id)
         return JSONResponse(
-            content={"code": 200, "message": "文件正在后台处理", "data": {"task_id": task.id}}
+            content={
+                "code": 200,
+                "message": "文件正在后台处理",
+                "data": {"task_id": task.id},
+            }
         )
     except Exception as e:
         logger.exception(e)

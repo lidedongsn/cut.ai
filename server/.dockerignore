@@ -1,0 +1,51 @@
+# 忽略 Git 相关文件
+.git
+.gitignore
+
+# 忽略 Python 缓存和虚拟环境
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+.env
+.venv/
+venv/
+env/
+
+# 忽略操作系统和 IDE 文件
+.DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+.vscode/
+.idea/
+__pycache__
+api/__pycache__
+config/__pycache__
+db/__pycache__
+fastapi_celery/__pycache__
+result/*
+storage/*
+# 忽略测试相关文件（如果不打包测试）
+tests/
+*.test.*
+*.spec.*
+
+# 忽略大文件
+*.mp3
+*.mp4
+*.wav
+*.mkv
+
+*.srt
+
+.gitignore
+
+# 忽略构建产物
+dist/
+build/
+*.egg-info/

@@ -32,6 +32,12 @@ uvicorn main:app --reload --host 0.0.0.0 --port 5010
 celery -A celery_config worker --loglevel=info 
 ```
 
+### docker
+
+``` shell
+docker run -d --rm --gpus all -p 5010:5010 --name cut.ai-server -e "REDIS_HOST=192.168.4.9" -e "REDIS_PORT=6379" -e "REDIS_PASSWORD=lidedongsn" cut.ai-server:latest 
+```
+
 ### Web
 修改 `www/web/.env.development`文件中实际的 server 地址，并运行
 VITE_BASE_URL='http://localhost:5010'

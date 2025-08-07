@@ -2,15 +2,16 @@ import json
 import redis
 from config.config_loader import REDIS_CONFIG
 from loguru import logger
+import os
 
 
 class RedisHandler:
     def __init__(
         self,
-        host=REDIS_CONFIG["host"],
-        port=REDIS_CONFIG["port"],
-        db=REDIS_CONFIG["db"],
-        password=REDIS_CONFIG["password"],
+        host=os.getenv("REDIS_HOST", REDIS_CONFIG["host"]),
+        port=os.getenv("REDIS_PORT", REDIS_CONFIG["port"]),
+        db=os.getenv("REDIS_DB", REDIS_CONFIG["db"]),
+        password=os.getenv("REDIS_PASSWORD", REDIS_CONFIG["password"]),
     ):
         self.host = host
         self.port = port
@@ -80,11 +81,12 @@ class RedisHandler:
             self.redis_client.delete(file_id)
         except Exception as e:
             logger.error(f"Error deleting file: {e}")
-    
+
     def set_stt_task(self, task_id, task_info):
         try:
             self.redis_client.setex(
-                self.TASKKEY_PREFIX + task_id, 3600 * 24 * 7, json.dumps(task_info))
+                self.TASKKEY_PREFIX + task_id, 3600 * 24 * 7, json.dumps(task_info)
+            )
         except Exception as e:
             logger.error(f"Error setting STT task: {e}")
 
