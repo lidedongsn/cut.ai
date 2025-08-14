@@ -1,32 +1,39 @@
 <template>
-  <div class="p-6 w-96 mx-auto bg-gray-200 rounded-xl shadow-md flex items-center space-x-4">
+  <div class="p-6 w-96 mx-auto bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-xl shadow-md flex items-center space-x-4 transition-colors duration-300">
     <div class="flex flex-col w-full items-center">
-      <h2 class="mb-4 text-xl font-bold text-gray-900">音视频文件上传</h2>
+      <!-- 修复标题的深色模式文字颜色 -->
+      <h2 class="mb-4 text-xl font-bold dark:text-gray-100">音视频文件上传</h2>
+      
       <input
         class="hidden"
         type="file"
         ref="fileInput"
         @change="handleFileChange"
-        style="display: none"
         accept=".mp3, .wav, .m4a, .wma, .aac, .ogg, .amr, .flac, .mp4, .wmv, .m4v, .flv, .rmvb, .dat, .mov, .mkv, .webm, audio/aac"
       />
-      <!-- 自定义的矩形框，用于触发文件选择 -->
+      
+      <!-- 自定义文件选择框：优化深色模式下的边框和背景色 -->
       <span
-        class="truncate block w-full px-4 py-2 border border-dashed border-gray-300 rounded-md cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors duration-300 h-16"
+        class="truncate block w-full px-4 py-2 border border-dashed rounded-md cursor-pointer transition-colors duration-300 h-16
+               bg-gray-100 hover:bg-gray-200 
+               dark:bg-gray-900
+               dark:border-gray-600 dark:text-gray-200"
         @click="triggerFileInput"
         :title="selectedFileName"
       >
-        <!-- 显示选择的文件名，如果没有文件，则显示默认文本 -->
         {{ selectedFileName || '选择音视频文件' }}
       </span>
-      <div v-if="isUploading" class="w-full bg-gray-300 rounded-full h-2.5 dark:bg-gray-700">
-        <div :style="{ width: uploadProgress + '%' }" class="bg-blue-600 h-2.5 rounded-full"></div>
+      
+     <!-- 进度条颜色调整：使用绿色系 -->
+      <div v-if="isUploading" class="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-2.5 mt-3">
+        <div :style="{ width: uploadProgress + '%' }" class="bg-emerald-500 dark:bg-emerald-400 h-2.5 rounded-full transition-all duration-300"></div>
       </div>
 
+      <!-- 按钮：优化深色模式下的悬停色和禁用色 -->
       <button
-        @click="uploadFile"
+        class="w-full mt-4 py-2 transition-transform transform dark:bg-gray-900 hover:scale-105 hover:shadow-md rounded-lg text-white font-semibold border border-gray-600"
+         @click="uploadFile"
         :disabled="isUploading"
-        class="mt-4 px-4 py-2 bg-blue-500 text-white text-lg font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:bg-blue-300 disabled:cursor-not-allowed"
       >
         开始转写
       </button>
@@ -41,19 +48,17 @@ export default {
   data() {
     return {
       selectedFile: null,
-      uploadProgress: 0, // 新增上传进度变量
-      isUploading: false // 新增上传状态变量
+      uploadProgress: 0,
+      isUploading: false
     }
   },
   computed: {
-    // 计算属性用于获取选择的文件名
     selectedFileName() {
       return this.selectedFile ? this.selectedFile.name : ''
     }
   },
   methods: {
     triggerFileInput() {
-      // 触发input的点击事件
       this.$refs.fileInput.click()
     },
     handleFileChange(e) {
@@ -65,7 +70,8 @@ export default {
         return
       }
 
-      this.isUploading = true // 开始上传时设置为true
+      this.isUploading = true
+      this.uploadProgress = 0
 
       const formData = new FormData()
       formData.append('file', this.selectedFile)
@@ -76,22 +82,22 @@ export default {
             'Content-Type': 'multipart/form-data'
           },
           onUploadProgress: (progressEvent) => {
-            this.uploadProgress = parseInt(
-              Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            )
+            if (progressEvent.total) {
+              this.uploadProgress = parseInt(
+                Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              )
+            }
           },
           timeout: 6000000
         })
+        
         if (response.status !== 200) {
           throw new Error('上传失败！')
         }
-        ElMessage({
-          message: '文件上传成功！',
-          type: 'success'
-        })
-        this.uploadProgress = 0 // 上传成功后重置进度条
-        this.isUploading = false // 隐藏进度条
-        // 继续发起 STT 任务请求
+        
+        ElMessage.success('文件上传成功！')
+        
+        // 发起STT任务
         const data = new FormData()
         data.append('file_id', response.data.data.file_id)
         const sttResponse = await this.$axios.post('/api/stt', data, {
@@ -99,15 +105,18 @@ export default {
             'Content-Type': 'multipart/form-data'
           }
         })
+        
         if (sttResponse.status !== 200) {
           throw new Error('发起STT任务失败！')
         }
 
         this.$router.push(`/transcripts/${sttResponse.data.data.task_id}`); 
       } catch (error) {
-        console.error('上传失败', error)
-        ElMessage.error('上传失败！')
-        this.isUploading = false // 发生错误时也要隐藏进度条
+        console.error('操作失败', error)
+        ElMessage.error('操作失败，请重试！')
+      } finally {
+        this.isUploading = false
+        this.uploadProgress = 0
       }
     }
   }

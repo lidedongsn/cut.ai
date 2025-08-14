@@ -12,6 +12,8 @@ import 'element-plus/dist/index.css'
 
 const app = createApp(App)
 app.config.globalProperties.$axios = axios;
+document.documentElement.classList.add('dark')
+
 
 app.use(createPinia())
 app.use(router)

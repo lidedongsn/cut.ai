@@ -1,8 +1,8 @@
 <template>
-  <div class="h-screen gradient-bg">
+  <div class="h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-white ">
     <!-- 加载状态，居中显示loadingMessage -->
     <div v-if="isLoading && loadingMessage" class="flex h-screen justify-center items-center">
-      <div class="animate-pulse text-3xl font-bold text-center text-blue-800">
+      <div class="animate-pulse text-3xl font-bold text-center">
         {{ loadingMessage }}
         <span class="loading-animation"></span>
       </div>
@@ -16,7 +16,7 @@
       <div class="text-lg font-bold mb-4">关键字</div>
       <div class="text-lg font-bold mb-4">内容概要</div>
       <div class="text-lg font-bold mb-4">原文</div>
-      <div class="flex-grow p-4 rounded-lg text-gradient-bg overflow-auto h-4/5">
+      <div class="flex-grow p-4 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white  overflow-auto h-4/5">
         {{ text }}
       </div>
     </div>
