@@ -101,6 +101,7 @@ async def get_stt_result(task_id: str):
                     "data": {
                         "task_id": task_id,
                         "text": task_info["text"],
+                        "segments": task_info["segments"],
                         "file_name": task_info["file_name"],
                     },
                 }

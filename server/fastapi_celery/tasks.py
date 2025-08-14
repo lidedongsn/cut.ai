@@ -48,11 +48,11 @@ def process_file_celery(self, file_id):
             audio_clip.close()
 
         file_info["stt_file_name"] = stt_file_name
-        
+
         global model
         if model is None:
             torch.set_num_threads(os.cpu_count())
-            model = load_model(model_name) 
+            model = load_model(model_name)
 
         with wave.open(stt_file_name, "r") as wav_file:
             # 获取音频参数
@@ -103,6 +103,12 @@ def process_file_celery(self, file_id):
         )
         T2 = time.time()
         logger.info(f"识别耗时：{T2-T1}秒")
+        
+        # 将整个 segments 列表保存，以便前端灵活处理
+        segments = result['segments']
+        # 为了兼容之前的 `text` 字段，依然保存一个格式化后的文本
+        formatted_text = "\n\n".join([s['text'] for s in segments])
+
         # 生成 SRT 字幕
         sync_redis.set_stt_task(
             task_id=task_id,
@@ -121,8 +127,7 @@ def process_file_celery(self, file_id):
         T3 = time.time()
         logger.info(f"生成字幕耗时：{T3-T2}秒")
 
-        text = result["text"]
-        # 保存识别结果到Redis或mysql
+        # 保存识别结果到Redis
         # 清理临时文件
         os.remove(file_path)
         logger.info(f"文件处理完毕：{file_path}")
@@ -135,7 +140,8 @@ def process_file_celery(self, file_id):
         task_info["status"] = "success"
         task_info["process"] = "completed"
         task_info["cost_time"] = round(T3 - T0, 2)
-        task_info["text"] = text
+        task_info["text"] = formatted_text  # 保存格式化后的文本
+        task_info["segments"] = segments    # 新增：保存 segments 列表
         task_info["state"] = "SUCCESS"
 
         sync_redis.set_stt_task(task_id=task_id, task_info=task_info)
