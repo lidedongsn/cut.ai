@@ -12,9 +12,12 @@ from moviepy import VideoFileClip
 
 sync_redis = RedisHandler()
 
-
+import torch
+model = None
+model_name = "small"
 @app.task(bind=True)
 def process_file_celery(self, file_id):
+
     try:
         task_id = self.request.id
         sync_redis.set_stt_task(
@@ -45,6 +48,11 @@ def process_file_celery(self, file_id):
             audio_clip.close()
 
         file_info["stt_file_name"] = stt_file_name
+        
+        global model
+        if model is None:
+            torch.set_num_threads(os.cpu_count())
+            model = load_model(model_name) 
 
         with wave.open(stt_file_name, "r") as wav_file:
             # 获取音频参数
@@ -73,8 +81,6 @@ def process_file_celery(self, file_id):
                 "process": "loading_model",
             },
         )
-        model_name = "small"
-        model = load_model(model_name)
         T1 = time.time()
         logger.info(f"加载模型耗时：{T1-T0}秒")
         # 使用 whisper 处理音频识别

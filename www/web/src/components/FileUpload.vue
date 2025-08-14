@@ -93,8 +93,6 @@ export default {
         
         ElMessage.success('文件上传成功！')
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
         // 发起STT任务
         const data = new FormData()
         data.append('file_id', response.data.data.file_id)
@@ -107,6 +105,8 @@ export default {
         if (sttResponse.status !== 200) {
           throw new Error('发起STT任务失败！')
         }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         this.$router.push(`/transcripts/${sttResponse.data.data.task_id}`); 
       } catch (error) {
