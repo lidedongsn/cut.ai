@@ -3,10 +3,7 @@
     class="p-6 w-96 mx-auto bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-xl shadow-md flex items-center space-x-4 transition-colors duration-300"
   >
     <div class="flex flex-col w-full items-center">
-      <img src="@/assets/logo.png" alt="转写工具" class="absolute top-4 left-4 w-16 h-16" />
-
       <h2 class="mb-4 text-xl font-bold dark:text-gray-100">音视频文件上传</h2>
-
       <input
         class="hidden"
         type="file"

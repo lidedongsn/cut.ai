@@ -1,5 +1,7 @@
 <template>
-  <div class="flex justify-center items-center h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-white ">
+  <div
+    class="flex justify-center items-center h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
+  >
     <FileUpload />
   </div>
 </template>
@@ -9,7 +11,7 @@ import FileUpload from '@/components/FileUpload.vue'
 export default {
   components: {
     FileUpload
-  },
+  }
 }
 </script>
 
