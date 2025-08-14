@@ -93,6 +93,8 @@ export default {
         
         ElMessage.success('文件上传成功！')
         
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // 发起STT任务
         const data = new FormData()
         data.append('file_id', response.data.data.file_id)
