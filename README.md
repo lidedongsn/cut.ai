@@ -2,6 +2,9 @@
 
 cut.ai 是一个AI音视频剪辑工具，语音转写基于whisper
 
+![示例](./assets/page.gif)
+
+
 ## 功能列表
 
 - [x] 语音转写
