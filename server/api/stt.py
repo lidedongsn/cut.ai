@@ -9,16 +9,23 @@ from datetime import datetime
 from fastapi_celery.tasks import process_file_celery, get_stt_progress
 import uuid
 from db.redis import RedisHandler
+from pydantic import BaseModel
+from typing import List, Dict, Any
 
 router = APIRouter()
 sync_redis = RedisHandler()
+
+
+class UpdateTranscriptRequest(BaseModel):
+    task_id: str
+    segments: List[Dict[str, Any]]
 
 
 @router.post("/upload")
 async def file_upload(file: UploadFile = File(...)):
     # 检查上传的文件类型
     if not file.content_type.startswith(("audio/", "video/")):
-        raise HTTPException(status_code=400, detail="只能上传音频或视频文件。")
+        raise HTTPException(status_code=400, detail="只能上传音频或视频文件。" )
 
     try:
         # 获取当前时间
@@ -103,7 +110,7 @@ async def get_stt_result(task_id: str):
                         "text": task_info["text"],
                         "segments": task_info["segments"],
                         "file_name": task_info["file_name"],
-                        "file_path": task_info["file_path"],
+                        "file_path": task_info.get("file_path"), # 使用.get以增加健壮性
                     },
                 }
             )
@@ -126,3 +133,31 @@ async def get_stt_result(task_id: str):
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail="获取文件处理结果失败")
+
+
+@router.post("/stt-update")
+async def update_stt_task(request: UpdateTranscriptRequest):
+    try:
+        # 从Redis获取现有的任务数据
+        task_info = sync_redis.get_stt_task(request.task_id)
+        if task_info is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        # 更新 segments
+        task_info["segments"] = request.segments
+        
+        # 根据更新后的 words 重建每个 segment 的 text 属性
+        for segment in task_info["segments"]:
+            # 使用空格连接单词，对于中文可能需要调整为无空格
+            segment['text'] = "".join([word['word'] for word in segment['words']]).strip()
+        
+        # 根据更新后的 segments 重建整个 text 字段
+        task_info["text"] = "\n\n".join([s['text'] for s in task_info["segments"]])
+
+        # 将更新后的数据保存回Redis
+        sync_redis.set_stt_task(request.task_id, task_info)
+
+        return JSONResponse(content={"code": 200, "message": "Transcript updated successfully"})
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail="Failed to update transcript")

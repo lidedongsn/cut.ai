@@ -37,10 +37,18 @@
             </button>
           </div>
         </div>
-        <div v-if="!isWaveformLoading && audioUrl" class="flex items-center justify-center gap-4 mb-4">
+        <div class="flex items-center justify-between gap-4 mb-4">
           <div class="text-sm font-mono">
-            {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+            <span v-if="!isWaveformLoading && audioUrl">{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</span>
           </div>
+          <button
+            v-if="hasUnsavedChanges"
+            @click="saveChanges"
+            :disabled="isSaving"
+            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {{ isSaving ? '保存中...' : '保存修改' }}
+          </button>
         </div>
       </div>
 
@@ -65,13 +73,15 @@
           <p class="text-sm text-gray-500">
             [{{ formatTime(seg.start) }} - {{ formatTime(seg.end) }}]
           </p>
-          <p class="leading-loose">
+          <p class="leading-relaxed">
             <span
               v-for="(word, wordIndex) in seg.words"
               :key="wordIndex"
               @click="seekTo(word.start)"
               :class="{ 'bg-yellow-300 text-black rounded': isWordActive(word) }"
               class="cursor-pointer transition-colors duration-200"
+              contenteditable="true"
+              @blur="updateWord(seg.id, wordIndex, $event)"
             >
               {{ word.word }}
             </span>
@@ -109,13 +119,48 @@ export default {
       activeSegmentId: null,
       segmentRefs: {},
       wavesurfer: null,
-      isPlaying: false
+      isPlaying: false,
+      hasUnsavedChanges: false,
+      isSaving: false
     }
   },
   beforeUpdate() {
     this.segmentRefs = {}
   },
   methods: {
+    updateWord(segmentId, wordIndex, event) {
+      const newText = event.target.innerText.trim()
+      const segment = this.segments.find((s) => s.id === segmentId)
+      if (segment && segment.words[wordIndex].word !== newText) {
+        segment.words[wordIndex].word = newText
+        this.hasUnsavedChanges = true
+      }
+    },
+    async saveChanges() {
+      if (!this.hasUnsavedChanges) return
+      this.isSaving = true
+      try {
+        const taskId = this.$route.params.task_id
+        // 在保存前，根据修改后的 words 更新每个 segment 的 text 属性
+        const updatedSegments = this.segments.map(seg => {
+          const newText = seg.words.map(w => w.word).join(' ')
+          return { ...seg, text: newText }
+        })
+
+        await this.$axios.post(`/api/stt-update`, {
+          task_id: taskId,
+          segments: updatedSegments
+        })
+        this.hasUnsavedChanges = false
+        // 可以添加一个成功提示, 例如使用 Element Plus 的 ElMessage
+        // this.$message.success('保存成功!')
+      } catch (error) {
+        console.error('保存失败:', error)
+        // this.$message.error('保存失败，请稍后再试')
+      } finally {
+        this.isSaving = false
+      }
+    },
     async fetchTranscript(taskId) {
       this.isFetchingTranscript = true
       try {

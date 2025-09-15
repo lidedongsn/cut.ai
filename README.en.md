@@ -13,6 +13,7 @@ cut.ai is an AI-powered tool for audio/video editing, with speech-to-text functi
 - [x] **Waveform Player**: A modern, interactive audio player with waveform visualization, powered by `wavesurfer.js`.
 - [x] **Synchronized Highlighting**: During playback, the transcript features dual-level highlighting for both phrases and individual words, with smooth auto-scrolling to keep the current focus in view.
 - [x] **Click-to-Seek**: Click anywhere on the transcript to jump the audio playback to the corresponding moment.
+- [x] **Inline Editing**: Edit the transcript directly on the page and save the changes back to the server.
 - [ ] Content Summarization
 - [ ] Subtitle Editing
 - [ ] Chapter Overview
