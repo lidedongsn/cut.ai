@@ -1,8 +1,9 @@
 # cut.ai
 
+[Read in English](README.en.md)
+
 cut.ai 是一个AI音视频剪辑工具，语音转写基于whisper
 
-**注意: 下方的 GIF 演示已过时，展示的是旧版界面。**
 ![示例](./assets/page.gif)
 
 
