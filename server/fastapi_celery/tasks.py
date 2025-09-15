@@ -128,9 +128,12 @@ def process_file_celery(self, file_id):
             },
         )
         writer = get_writer("srt", "./result")
+        # srt_path 需要基于 file_path(storage/2025-09-15_16-10-34.711_防溺水.MP3) 生成，避免覆盖
+        srt_path = os.path.splitext(os.path.basename(file_path))[0] + ".srt"
+        logger.info(f"字幕保存路径：{srt_path}")
         writer(
             result,
-            f"{file_name}.srt",
+            srt_path,
             {"highlight_words": True, "max_line_count": 3, "max_line_width": 3},
         )
         T3 = time.time()

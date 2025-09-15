@@ -12,7 +12,7 @@
         <h2 class="text-2xl font-extrabold dark:text-gray-100">音视频文件上传</h2>
       </div>
       <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        支持格式：mp3, wav, m4a, mp4, mov, mkv 等，最大 200MB
+        支持格式：mp3, wav, m4a, mp4, mov, mkv 等，最大 4GB
       </p>
       <div
         class="w-full border-2 border-dashed border-emerald-400 dark:border-emerald-600 rounded-xl bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900 transition"
@@ -104,9 +104,9 @@ export default {
         ElMessage.error('请选择一个文件！')
         return
       }
-      // 文件大小限制200MB
-      if (this.selectedFile.size > 200 * 1024 * 1024) {
-        ElMessage.error('文件不能超过200MB！')
+      // 文件大小限制4GB
+      if (this.selectedFile.size > 4 * 1024 * 1024 * 1024) {
+        ElMessage.error('文件不能超过4GB！')
         return
       }
 

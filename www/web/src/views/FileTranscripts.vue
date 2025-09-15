@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white dark:bg-gray-900 text-gray-800 dark:text-white h-full">
     <!-- 全局加载状态 -->
-    <div v-if="isFetchingTranscript" class="flex h-screen justify-center items-center">
+    <div v-if="isFetchingTranscript" class="flex h-full justify-center items-center">
       <div class="animate-pulse text-3xl font-bold text-center">
         {{ loadingMessage }}
         <span class="loading-animation"></span>
@@ -14,11 +14,11 @@
     </div>
 
     <!-- 显示内容 -->
-    <div v-else class="relative flex flex-col p-20 w-full h-screen">
+    <div v-else class="relative flex flex-col p-8 w-full h-screen">
       <div class="flex-none">
         <!-- <div class="text-lg font-bold mb-4">关键字</div>
         <div class="text-lg font-bold mb-4">内容概要</div> -->
-        <div class="text-lg font-bold mb-4">AI 转写结果</div>
+        <div class="text-2xl font-bold mb-4">AI 转写结果</div>
 
         <!-- WaveSurfer Container -->
         <div class="relative group">
@@ -37,18 +37,10 @@
             </button>
           </div>
         </div>
-        <div class="flex items-center justify-between gap-4 mb-4">
+        <div v-if="!isWaveformLoading && audioUrl" class="text-center mb-4">
           <div class="text-sm font-mono">
-            <span v-if="!isWaveformLoading && audioUrl">{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</span>
+            {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
           </div>
-          <button
-            v-if="hasUnsavedChanges"
-            @click="saveChanges"
-            :disabled="isSaving"
-            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {{ isSaving ? '保存中...' : '保存修改' }}
-          </button>
         </div>
       </div>
 

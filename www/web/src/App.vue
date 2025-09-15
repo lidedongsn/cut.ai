@@ -10,7 +10,7 @@ import { RouterLink, RouterView } from 'vue-router'
         <span class="text-purple-500 font-medium text-3xl">AI™</span>
       </RouterLink>
     </header>
-    <main class="h-full" :class="{ 'pt-32 px-4 sm:px-8': $route.meta.layout !== 'centered' }">
+    <main class="h-full" :class="{ 'pt-24 px-4 sm:px-8': $route.meta.layout !== 'centered' }">
       <RouterView />
     </main>
   </div>
