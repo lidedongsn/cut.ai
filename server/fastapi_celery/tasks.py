@@ -147,6 +147,7 @@ def process_file_celery(self, file_id):
         task_info = {}
         task_info["completion_time"] = datetime.now().isoformat()
         task_info["file_id"] = file_id
+        task_info["file_type"] = file_info.get("file_type")
         task_info["file_name"] = file_name
         task_info["file_path"] = file_info["file_path"]
         task_info["duration"] = duration
@@ -164,11 +165,11 @@ def process_file_celery(self, file_id):
             task_id=task_id,
             task_info={"file_id": file_id, "state": "FAILURE", "process": "failed"},
         )
-    # finally:
-    #     # 确保所有临时文件都被清理
-    #     if file_info["file_path"] != file_info["stt_file_name"]:
-    #         if os.path.exists(file_info["stt_file_name"]):
-    #             os.remove(file_info["stt_file_name"])
+    finally:
+        # 确保所有临时文件都被清理
+        if file_info["file_path"] != file_info["stt_file_name"]:
+            if os.path.exists(file_info["stt_file_name"]):
+                os.remove(file_info["stt_file_name"])
 
 
 async def get_stt_progress(task_id):

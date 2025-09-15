@@ -25,7 +25,7 @@ class UpdateTranscriptRequest(BaseModel):
 async def file_upload(file: UploadFile = File(...)):
     # 检查上传的文件类型
     if not file.content_type.startswith(("audio/", "video/")):
-        raise HTTPException(status_code=400, detail="只能上传音频或视频文件。" )
+        raise HTTPException(status_code=400, detail="只能上传音频或视频文件。")
 
     try:
         # 获取当前时间
@@ -109,10 +109,11 @@ async def get_stt_result(task_id: str):
                     "message": "文件处理完成",
                     "data": {
                         "task_id": task_id,
+                        "file_name": task_info["file_name"],
+                        "file_path": task_info.get("file_path"),  # 使用.get以增加健壮性
+                        "file_type": task_info.get("file_type"),
                         "text": task_info["text"],
                         "segments": task_info["segments"],
-                        "file_name": task_info["file_name"],
-                        "file_path": task_info.get("file_path"), # 使用.get以增加健壮性
                     },
                 }
             )
@@ -147,19 +148,23 @@ async def update_stt_task(request: UpdateTranscriptRequest):
 
         # 更新 segments
         task_info["segments"] = request.segments
-        
+
         # 根据更新后的 words 重建每个 segment 的 text 属性
         for segment in task_info["segments"]:
             # 使用空格连接单词，对于中文可能需要调整为无空格
-            segment['text'] = "".join([word['word'] for word in segment['words']]).strip()
-        
+            segment["text"] = "".join(
+                [word["word"] for word in segment["words"]]
+            ).strip()
+
         # 根据更新后的 segments 重建整个 text 字段
-        task_info["text"] = "\n\n".join([s['text'] for s in task_info["segments"]])
+        task_info["text"] = "\n\n".join([s["text"] for s in task_info["segments"]])
 
         # 将更新后的数据保存回Redis
         sync_redis.set_stt_task(request.task_id, task_info)
 
-        return JSONResponse(content={"code": 200, "message": "Transcript updated successfully"})
+        return JSONResponse(
+            content={"code": 200, "message": "Transcript updated successfully"}
+        )
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail="Failed to update transcript")
@@ -176,7 +181,7 @@ async def get_all_stt_tasks():
             # 过滤掉不符合条件的任务
             if not task_info:
                 continue
-            
+
             # 必须是成功状态
             if task_info.get("state") != "SUCCESS":
                 continue
@@ -185,16 +190,18 @@ async def get_all_stt_tasks():
             file_path = task_info.get("file_path")
             if not file_path or not os.path.exists(file_path):
                 continue
-            
+
             # 确保关键信息完整
             if not all(k in task_info for k in ["file_name", "duration", "segments"]):
                 continue
-            
+
             # 添加 task_id 到要返回的信息中
             task_info["task_id"] = task_id
             valid_tasks.append(task_info)
 
-        return JSONResponse(content={"code": 200, "message": "Success", "data": valid_tasks})
+        return JSONResponse(
+            content={"code": 200, "message": "Success", "data": valid_tasks}
+        )
 
     except Exception as e:
         logger.exception(e)

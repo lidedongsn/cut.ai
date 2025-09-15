@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-white dark:bg-gray-900 text-gray-800 dark:text-white h-full">
+  <div class="bg-white dark:bg-gray-900 text-gray-800 dark:text-white h-full flex flex-col">
     <!-- 全局加载状态 -->
-    <div v-if="isFetchingTranscript" class="flex h-full justify-center items-center">
+    <div v-if="isFetchingTranscript" class="flex-grow flex justify-center items-center">
       <div class="animate-pulse text-3xl font-bold text-center">
         {{ loadingMessage }}
         <span class="loading-animation"></span>
@@ -14,79 +14,96 @@
     </div>
 
     <!-- 显示内容 -->
-    <div v-else class="relative flex flex-col p-8 w-full h-screen">
-      <div class="flex-none">
-        <!-- <div class="text-lg font-bold mb-4">关键字</div>
-        <div class="text-lg font-bold mb-4">内容概要</div> -->
-        <div class="text-2xl font-bold mb-4">AI 转写结果</div>
+    <div v-else class="flex-grow p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-hidden">
+      <!-- Left Column: Media Player -->
+      <div class="flex flex-col overflow-y-auto">
+        <div class="text-2xl font-bold mb-4 flex-shrink-0">AI 转写结果</div>
+        <!-- Video Player -->
+        <video
+          v-if="isVideo"
+          ref="videoPlayer"
+          :src="audioUrl"
+          class="w-full rounded-lg mb-4 bg-black aspect-video flex-shrink-0"
+          muted
+          playsinline
+        ></video>
 
         <!-- WaveSurfer Container -->
-        <div class="relative group">
+        <div class="relative group flex-shrink-0">
           <div v-if="isWaveformLoading" class="flex items-center justify-center h-[100px] bg-gray-100 dark:bg-gray-800 rounded-lg mb-4">
             <p class="text-gray-500 animate-pulse">正在加载音频波形...</p>
           </div>
           <div ref="waveform" class="mb-4"></div>
           <div v-if="!isWaveformLoading && audioUrl" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-            <button @click="togglePlay" class="w-16 h-16 bg-black bg-opacity-50 rounded-full flex items-center justify-center text-white hover:bg-opacity-75 transition-all">
-              <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 ml-1">
+            <button @click="togglePlay" class="w-20 h-20 rounded-full flex items-center justify-center text-gray-700 dark:text-gray-300 hover:ring-2 hover:ring-gray-500/50 transition-all group">
+              <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-12 h-12 ml-1 opacity-75 group-hover:opacity-100 transition-opacity" style="filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));">
                 <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.647c1.295.742 1.295 2.545 0 3.286L7.279 20.99c-1.25.72-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" />
               </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
+              <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-12 h-12 opacity-75 group-hover:opacity-100 transition-opacity" style="filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));">
                 <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75.75v12a.75.75 0 01-1.5 0v-12a.75.75 0 01.75-.75zM16.5 5.25a.75.75 0 01.75.75v12a.75.75 0 01-1.5 0v-12a.75.75 0 01.75-.75z" clip-rule="evenodd" />
               </svg>
             </button>
           </div>
         </div>
-        <div v-if="!isWaveformLoading && audioUrl" class="text-center mb-4">
+        <div v-if="!isWaveformLoading && audioUrl" class="text-center mb-4 flex-shrink-0">
           <div class="text-sm font-mono">
             {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
           </div>
         </div>
       </div>
 
-      <!-- 如果有 segments，就分段显示 -->
-      <div
-        v-if="segments.length"
-        ref="transcriptContainer"
-        class="flex-grow p-4 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white space-y-3 overflow-y-auto transition-opacity"
-        :class="{ 'pointer-events-none opacity-50': isWaveformLoading }"
-      >
-        <div
-          v-for="seg in segments"
-          :key="seg.id"
-          :ref="
-            (el) => {
-              if (seg && seg.id !== undefined) segmentRefs[seg.id] = el
-            }
-          "
-          class="mb-2 p-2 rounded-md transition-colors duration-300"
-          :class="{ 'bg-gray-100 dark:bg-gray-700': isSegmentActive(seg) }"
-        >
-          <p class="text-sm text-gray-500">
-            [{{ formatTime(seg.start) }} - {{ formatTime(seg.end) }}]
-          </p>
-          <p class="leading-relaxed">
-            <span
-              v-for="(word, wordIndex) in seg.words"
-              :key="wordIndex"
-              @click="seekTo(word.start)"
-              :class="{ 'bg-yellow-300 text-black rounded': isWordActive(word) }"
-              class="cursor-pointer transition-colors duration-200"
-              contenteditable="true"
-              @blur="updateWord(seg.id, wordIndex, $event)"
+      <!-- Right Column: Transcript -->
+      <div class="flex flex-col h-full overflow-hidden">
+        <div class="flex justify-between items-center mb-4 flex-shrink-0">
+           <h2 class="text-2xl font-bold">转写文本</h2>
+           <button
+              v-if="hasUnsavedChanges"
+              @click="saveChanges"
+              :disabled="isSaving"
+              class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {{ word.word }}
-            </span>
-          </p>
+              {{ isSaving ? '保存中...' : '保存修改' }}
+            </button>
         </div>
-      </div>
-
-      <!-- 如果没 segments，就显示 text -->
-      <div
-        v-else
-        class="flex-grow p-4 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white whitespace-pre-line overflow-y-auto"
-      >
-        {{ text }}
+        <div
+          v-if="segments.length"
+          ref="transcriptContainer"
+          class="flex-grow p-4 rounded-lg bg-gray-50 dark:bg-gray-800 space-y-3 overflow-y-auto transition-opacity"
+          :class="{ 'pointer-events-none opacity-50': isWaveformLoading }"
+        >
+          <div
+            v-for="seg in segments"
+            :key="seg.id"
+            :ref="
+              (el) => {
+                if (seg && seg.id !== undefined) segmentRefs[seg.id] = el
+              }
+            "
+            class="mb-2 p-2 rounded-md transition-colors duration-300"
+            :class="{ 'bg-gray-200 dark:bg-gray-700': isSegmentActive(seg) }"
+          >
+            <p class="text-sm text-gray-500">
+              [{{ formatTime(seg.start) }} - {{ formatTime(seg.end) }}]
+            </p>
+            <p class="leading-relaxed">
+              <span
+                v-for="(word, wordIndex) in seg.words"
+                :key="wordIndex"
+                @click="seekTo(word.start)"
+                :class="{ 'bg-yellow-300 text-black rounded': isWordActive(word) }"
+                class="cursor-pointer transition-colors duration-200"
+                contenteditable="true"
+                @blur="updateWord(seg.id, wordIndex, $event)"
+              >
+                {{ word.word }}
+              </span>
+            </p>
+          </div>
+        </div>
+        <!-- Fallback for plain text -->
+        <div v-else class="flex-grow p-4 rounded-lg bg-gray-50 dark:bg-gray-800 whitespace-pre-line overflow-y-auto">
+          {{ text }}
+        </div>
       </div>
     </div>
   </div>
@@ -106,6 +123,7 @@ export default {
       loadingMessage: '',
       timer: null,
       audioUrl: null,
+      fileType: null,
       currentTime: 0,
       duration: 0,
       activeSegmentId: null,
@@ -114,6 +132,11 @@ export default {
       isPlaying: false,
       hasUnsavedChanges: false,
       isSaving: false
+    }
+  },
+  computed: {
+    isVideo() {
+      return this.fileType && this.fileType.startsWith('video/');
     }
   },
   beforeUpdate() {
@@ -133,7 +156,6 @@ export default {
       this.isSaving = true
       try {
         const taskId = this.$route.params.task_id
-        // 在保存前，根据修改后的 words 更新每个 segment 的 text 属性
         const updatedSegments = this.segments.map(seg => {
           const newText = seg.words.map(w => w.word).join(' ')
           return { ...seg, text: newText }
@@ -144,11 +166,8 @@ export default {
           segments: updatedSegments
         })
         this.hasUnsavedChanges = false
-        // 可以添加一个成功提示, 例如使用 Element Plus 的 ElMessage
-        // this.$message.success('保存成功!')
       } catch (error) {
         console.error('保存失败:', error)
-        // this.$message.error('保存失败，请稍后再试')
       } finally {
         this.isSaving = false
       }
@@ -162,10 +181,11 @@ export default {
           const data = response.data.data
           this.text = data.text || ''
           this.segments = data.segments || []
-          this.isFetchingTranscript = false // 关键：立即隐藏全局加载
+          this.fileType = data.file_type || ''
+          this.isFetchingTranscript = false
 
           if (data.file_path) {
-            this.isWaveformLoading = true // 显示波形图加载
+            this.isWaveformLoading = true
             const baseUrl = import.meta.env.VITE_BASE_URL
             this.audioUrl = `${baseUrl}/${data.file_path}`
             this.$nextTick(() => {
@@ -194,15 +214,11 @@ export default {
         waveColor: '#A78BFA',
         progressColor: '#8B5CF6',
         url: this.audioUrl,
-        // barWidth: 3,
-        // barRadius: 3,
-        // barGap: 2,
-        // height: 100
       })
 
       this.wavesurfer.on('ready', (duration) => {
         this.duration = duration
-        this.isWaveformLoading = false // 关键：隐藏波形图加载
+        this.isWaveformLoading = false
       })
 
       this.wavesurfer.on('audioprocess', (currentTime) => {
@@ -211,10 +227,12 @@ export default {
 
       this.wavesurfer.on('play', () => {
         this.isPlaying = true
+        if (this.isVideo) this.$refs.videoPlayer.play()
       })
 
       this.wavesurfer.on('pause', () => {
         this.isPlaying = false
+        if (this.isVideo) this.$refs.videoPlayer.pause()
       })
 
       this.wavesurfer.on('finish', () => {
@@ -241,6 +259,13 @@ export default {
     },
     onTimeUpdate(currentTime) {
       this.currentTime = currentTime
+      // Force sync video with audio
+      if (this.isVideo && this.$refs.videoPlayer) {
+        const timeDiff = Math.abs(this.$refs.videoPlayer.currentTime - currentTime)
+        if (timeDiff > 0.2) { // Sync if discrepancy is larger than 200ms
+          this.$refs.videoPlayer.currentTime = currentTime
+        }
+      }
       const activeSegment = this.segments.find(
         (seg) => this.currentTime >= seg.start && this.currentTime < seg.end
       )
@@ -277,6 +302,10 @@ export default {
       if (this.wavesurfer && typeof time === 'number') {
         this.wavesurfer.setTime(time)
         this.wavesurfer.play()
+        // Also seek the video
+        if (this.isVideo && this.$refs.videoPlayer) {
+          this.$refs.videoPlayer.currentTime = time
+        }
       }
     }
   },
