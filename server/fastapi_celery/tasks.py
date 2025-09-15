@@ -1,5 +1,3 @@
-# tasks.py
-
 from celery_config import app
 from whisper import load_model
 import os
@@ -54,17 +52,26 @@ def process_file_celery(self, file_id):
             torch.set_num_threads(os.cpu_count())
             model = load_model(model_name)
 
-        with wave.open(stt_file_name, "r") as wav_file:
-            # 获取音频参数
-            length = wav_file.getnframes()
-            channels = wav_file.getnchannels()
-            width = wav_file.getsampwidth()
-            framerate = wav_file.getframerate()
-            duration = length / float(framerate)
-            file_info["audio_length"] = length
-            file_info["audio_channels"] = channels
-            file_info["audio_width"] = width
-            file_info["audio_framerate"] = framerate
+        if stt_file_name.lower().endswith(".wav"):
+            with wave.open(stt_file_name, "r") as wav_file:
+                length = wav_file.getnframes()
+                channels = wav_file.getnchannels()
+                width = wav_file.getsampwidth()
+                framerate = wav_file.getframerate()
+                duration = length / float(framerate)
+                file_info["audio_length"] = length
+                file_info["audio_channels"] = channels
+                file_info["audio_width"] = width
+                file_info["audio_framerate"] = framerate
+        else:
+            from pydub import AudioSegment
+            audio = AudioSegment.from_file(stt_file_name)
+            duration = len(audio) / 1000.0
+            file_info["audio_length"] = len(audio.get_array_of_samples())
+            file_info["audio_channels"] = audio.channels
+            file_info["audio_width"] = audio.sample_width
+            file_info["audio_framerate"] = audio.frame_rate
+
         logger.info(f"{task_id} 任务开始处理，文件信息：{file_info}")
 
         file_path = file_info["stt_file_name"]
@@ -100,6 +107,7 @@ def process_file_celery(self, file_id):
             language="Chinese",
             initial_prompt="以下是简体中文普通话的句子。",
             verbose=False,
+            word_timestamps=True,  # 获取每个词的时间戳
         )
         T2 = time.time()
         logger.info(f"识别耗时：{T2-T1}秒")
@@ -129,13 +137,13 @@ def process_file_celery(self, file_id):
 
         # 保存识别结果到Redis
         # 清理临时文件
-        os.remove(file_path)
+        # os.remove(file_path)
         logger.info(f"文件处理完毕：{file_path}")
 
         task_info = {}
         task_info["file_id"] = file_id
         task_info["file_name"] = file_name
-        task_info["file_path"] = file_path
+        task_info["file_path"] = file_info["file_path"]
         task_info["duration"] = duration
         task_info["status"] = "success"
         task_info["process"] = "completed"
@@ -151,11 +159,11 @@ def process_file_celery(self, file_id):
             task_id=task_id,
             task_info={"file_id": file_id, "state": "FAILURE", "process": "failed"},
         )
-    finally:
-        # 确保所有临时文件都被清理
-        if file_info["file_path"] != file_info["stt_file_name"]:
-            if os.path.exists(file_info["stt_file_name"]):
-                os.remove(file_info["stt_file_name"])
+    # finally:
+    #     # 确保所有临时文件都被清理
+    #     if file_info["file_path"] != file_info["stt_file_name"]:
+    #         if os.path.exists(file_info["stt_file_name"]):
+    #             os.remove(file_info["stt_file_name"])
 
 
 async def get_stt_progress(task_id):

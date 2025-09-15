@@ -42,12 +42,18 @@ app.add_middleware(
     allow_headers=["*"],  # 允许的头信息列表，['*'] 表示允许所有头
 )
 app.include_router(stt, prefix="/api", tags=["语音转写"])
+from fastapi.staticfiles import StaticFiles
+app.mount("/storage", StaticFiles(directory="storage"), name="storage")
+
 
 
 async def on_startup():
     logger.info("应用启动，列出所有路由：")
     for route in app.routes:
-        methods = ",".join(route.methods)
+        if hasattr(route, "methods"):
+            methods = ",".join(route.methods)
+        else:
+            methods = "-"
         route_details = f"路由: {route.path}, 方法: {methods}"
         logger.info(route_details)
 

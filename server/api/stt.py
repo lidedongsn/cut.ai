@@ -103,6 +103,7 @@ async def get_stt_result(task_id: str):
                         "text": task_info["text"],
                         "segments": task_info["segments"],
                         "file_name": task_info["file_name"],
+                        "file_path": task_info["file_path"],
                     },
                 }
             )
