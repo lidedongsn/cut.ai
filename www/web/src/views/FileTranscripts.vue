@@ -48,7 +48,8 @@
       <div
         v-if="segments.length"
         ref="transcriptContainer"
-        class="flex-grow p-4 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white space-y-3 overflow-y-auto"
+        class="flex-grow p-4 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white space-y-3 overflow-y-auto transition-opacity"
+        :class="{ 'pointer-events-none opacity-50': isWaveformLoading }"
       >
         <div
           v-for="seg in segments"
@@ -153,8 +154,8 @@ export default {
       if (!this.$refs.waveform) return
       this.wavesurfer = WaveSurfer.create({
         container: this.$refs.waveform,
-        waveColor: '#A8B5C1',
-        progressColor: '#4F46E5',
+        waveColor: '#A78BFA',
+        progressColor: '#8B5CF6',
         url: this.audioUrl,
         // barWidth: 3,
         // barRadius: 3,
@@ -237,7 +238,8 @@ export default {
     },
     seekTo(time) {
       if (this.wavesurfer && typeof time === 'number') {
-        this.wavesurfer.setCurrentTime(time)
+        this.wavesurfer.setTime(time)
+        this.wavesurfer.play()
       }
     }
   },
