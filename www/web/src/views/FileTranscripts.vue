@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-white">
+  <div class="bg-white dark:bg-gray-900 text-gray-800 dark:text-white h-full">
     <!-- 全局加载状态 -->
     <div v-if="isFetchingTranscript" class="flex h-screen justify-center items-center">
       <div class="animate-pulse text-3xl font-bold text-center">

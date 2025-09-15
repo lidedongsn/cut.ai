@@ -7,6 +7,7 @@ from db.redis import RedisHandler
 from whisper.utils import get_writer
 import wave
 from moviepy import VideoFileClip
+from datetime import datetime
 
 sync_redis = RedisHandler()
 
@@ -141,6 +142,7 @@ def process_file_celery(self, file_id):
         logger.info(f"文件处理完毕：{file_path}")
 
         task_info = {}
+        task_info["completion_time"] = datetime.now().isoformat()
         task_info["file_id"] = file_id
         task_info["file_name"] = file_name
         task_info["file_path"] = file_info["file_path"]

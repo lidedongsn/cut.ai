@@ -21,6 +21,7 @@ class RedisHandler:
         self.redis_client = None
         self.FILEKEY_PREFIX = "cutai:files:"
         self.TASKKEY_PREFIX = "cutai:tasks:"
+        self.TASK_ID_LIST_KEY = "cutai:task_id_list" # 全局任务ID列表的键
         self.connect()
 
     def connect(self):
@@ -99,3 +100,18 @@ class RedisHandler:
         except Exception as e:
             logger.error(f"Error getting STT task: {e}")
             return None
+
+    def add_task_to_global_list(self, task_id):
+        try:
+            # 使用 LPUSH 将新任务ID添加到列表头部，这样最新的任务总在最前面
+            self.redis_client.lpush(self.TASK_ID_LIST_KEY, task_id)
+        except Exception as e:
+            logger.error(f"Error adding task ID to global list: {e}")
+
+    def get_all_task_ids_from_global_list(self, start=0, end=-1):
+        try:
+            task_ids = self.redis_client.lrange(self.TASK_ID_LIST_KEY, start, end)
+            return [task_id.decode("utf-8") for task_id in task_ids]
+        except Exception as e:
+            logger.error(f"Error retrieving task IDs from global list: {e}")
+            return []

@@ -6,12 +6,18 @@ const router = createRouter({
     {
       path: '/',
       name: 'HomePage',
-      component: () => import('@/views/HomeView.vue')
+      component: () => import('@/views/HomeView.vue'),
+      meta: { layout: 'centered' }
     },
     {
       path: '/transcripts/:task_id',
       name: 'transcripts',
       component: () => import('@/views/FileTranscripts.vue')
+    },
+    {
+      path: '/tasks',
+      name: 'tasks',
+      component: () => import('@/views/AllTasksView.vue')
     }
   ]
 })

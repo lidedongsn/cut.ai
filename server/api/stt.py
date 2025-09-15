@@ -81,6 +81,8 @@ async def stt_task(file_id: str = Form(...)):
     try:
         logger.info(f"开始处理文件：{file_id}")
         task = process_file_celery.delay(file_id)
+        # 将任务ID添加到全局列表
+        sync_redis.add_task_to_global_list(task.id)
         return JSONResponse(
             content={
                 "code": 200,
@@ -161,3 +163,39 @@ async def update_stt_task(request: UpdateTranscriptRequest):
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail="Failed to update transcript")
+
+
+@router.get("/stt-tasks")
+async def get_all_stt_tasks():
+    try:
+        task_ids = sync_redis.get_all_task_ids_from_global_list()
+        valid_tasks = []
+        for task_id in task_ids:
+            task_info = sync_redis.get_stt_task(task_id)
+
+            # 过滤掉不符合条件的任务
+            if not task_info:
+                continue
+            
+            # 必须是成功状态
+            if task_info.get("state") != "SUCCESS":
+                continue
+
+            # 原始文件必须存在
+            file_path = task_info.get("file_path")
+            if not file_path or not os.path.exists(file_path):
+                continue
+            
+            # 确保关键信息完整
+            if not all(k in task_info for k in ["file_name", "duration", "segments"]):
+                continue
+            
+            # 添加 task_id 到要返回的信息中
+            task_info["task_id"] = task_id
+            valid_tasks.append(task_info)
+
+        return JSONResponse(content={"code": 200, "message": "Success", "data": valid_tasks})
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail="Failed to retrieve tasks")
