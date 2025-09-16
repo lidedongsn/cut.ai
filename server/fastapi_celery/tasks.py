@@ -127,14 +127,17 @@ def process_file_celery(self, file_id):
                 "process": "generating_subtitle",
             },
         )
-        writer = get_writer("srt", "./result")
-        # srt_path 需要基于 file_path(storage/2025-09-15_16-10-34.711_防溺水.MP3) 生成，避免覆盖
-        srt_path = os.path.splitext(os.path.basename(file_path))[0] + ".srt"
-        logger.info(f"字幕保存路径：{srt_path}")
+        # 使用被 whisper 处理的文件名来构造 srt 文件名
+        base_processed_filename = os.path.basename(file_path)
+        srt_filename = f"{base_processed_filename}.srt"
+        srt_output_dir = "./result"
+        srt_file_path = os.path.join(srt_output_dir, srt_filename)
+
+        writer = get_writer("srt", srt_output_dir)
         writer(
             result,
-            srt_path,
-            {"highlight_words": True, "max_line_count": 3, "max_line_width": 3},
+            srt_filename, # 使用新的 srt 文件名
+            # {"highlight_words": True, "max_line_count": 3, "max_line_width": 3},
         )
         T3 = time.time()
         logger.info(f"生成字幕耗时：{T3-T2}秒")
@@ -151,6 +154,7 @@ def process_file_celery(self, file_id):
         task_info["file_name"] = file_name
         task_info["file_path"] = file_info["file_path"]
         task_info["duration"] = duration
+        task_info["srt_path"] = srt_file_path
         task_info["status"] = "success"
         task_info["process"] = "completed"
         task_info["cost_time"] = round(T3 - T0, 2)

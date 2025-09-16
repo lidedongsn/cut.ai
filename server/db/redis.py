@@ -101,6 +101,19 @@ class RedisHandler:
             logger.error(f"Error getting STT task: {e}")
             return None
 
+    def delete_stt_task(self, task_id):
+        try:
+            self.redis_client.delete(self.TASKKEY_PREFIX + task_id)
+        except Exception as e:
+            logger.error(f"Error deleting STT task: {e}")
+
+    def remove_task_from_global_list(self, task_id):
+        try:
+            # 从列表中删除所有值为 task_id 的元素
+            self.redis_client.lrem(self.TASK_ID_LIST_KEY, 0, task_id)
+        except Exception as e:
+            logger.error(f"Error removing task ID from global list: {e}")
+
     def add_task_to_global_list(self, task_id):
         try:
             # 使用 LPUSH 将新任务ID添加到列表头部，这样最新的任务总在最前面

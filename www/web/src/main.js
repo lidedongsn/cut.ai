@@ -8,6 +8,7 @@ import router from './router'
 import axios from './tools/axios'; // 引入你的 Axios 实例
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 
 
 const app = createApp(App)

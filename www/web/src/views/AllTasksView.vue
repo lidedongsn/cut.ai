@@ -14,22 +14,31 @@
       <div
         v-for="task in tasks"
         :key="task.task_id"
-        class="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gray-50 dark:bg-gray-800 dark:border-gray-700 flex flex-col justify-between"
+        class="relative p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-gray-50 dark:bg-gray-800 dark:border-gray-700 flex flex-col justify-between group"
         @click="goToTranscript(task.task_id)"
       >
-        <div>
+        <div class="cursor-pointer">
           <h2 class="text-xl font-semibold text-blue-600 dark:text-blue-400 truncate">{{ task.file_name }}</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
             时长: {{ formatDuration(task.duration) }}
           </p>
         </div>
-        <p class="text-xs text-gray-400 dark:text-gray-500 mt-3 text-right">{{ formatDisplayDate(task.completion_time) }}</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-3 text-right cursor-pointer">{{ formatDisplayDate(task.completion_time) }}</p>
+        
+        <!-- Delete Button -->
+        <button @click.stop="deleteTask(task.task_id)" class="absolute top-2 right-2 p-1 rounded-full text-gray-400 hover:bg-red-100 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { ElMessageBox } from 'element-plus';
+
 export default {
   data() {
     return {
@@ -53,6 +62,29 @@ export default {
       } finally {
         this.isLoading = false
       }
+    },
+    async deleteTask(taskId) {
+      ElMessageBox.confirm(
+        '此操作将永久删除该任务及其关联的所有文件，是否继续？',
+        '确认删除',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      ).then(async () => {
+        try {
+          await this.$axios.delete(`/api/stt-task/${taskId}`);
+          this.tasks = this.tasks.filter(t => t.task_id !== taskId);
+          // import { ElMessage } from 'element-plus'
+          // ElMessage({ type: 'success', message: '删除成功' })
+        } catch (error) {
+          console.error('删除失败:', error);
+          // ElMessage({ type: 'error', message: '删除失败' })
+        }
+      }).catch(() => {
+        // Catch cancellation
+      });
     },
     goToTranscript(taskId) {
       this.$router.push({ name: 'transcripts', params: { task_id: taskId } })

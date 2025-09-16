@@ -206,3 +206,52 @@ async def get_all_stt_tasks():
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail="Failed to retrieve tasks")
+
+
+@router.delete("/stt-task/{task_id}")
+async def delete_stt_task(task_id: str):
+    try:
+        # 1. 获取任务信息
+        task_info = sync_redis.get_stt_task(task_id)
+        if not task_info:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        logger.info(f"Deleting task {task_id} with info: {task_info}")
+        # 2. 删除关联的 SRT 文件
+        srt_path = task_info.get("srt_path")
+        if srt_path and os.path.exists(srt_path):
+            try:
+                os.remove(srt_path)
+                logger.info(f"Deleted SRT file: {srt_path}")
+            except Exception as srt_del_error:
+                logger.error(f"Error deleting SRT file {srt_path}: {srt_del_error}")
+
+        # 3. 删除关联的媒体文件
+        file_path = task_info.get("file_path")
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                logger.info(f"Deleted media file: {file_path}")
+            except Exception as file_del_error:
+                logger.error(f"Error deleting file {file_path}: {file_del_error}")
+                #可以选择继续执行或在这里返回错误
+
+        # 3. 删除 Redis 中的任务详情
+        sync_redis.delete_stt_task(task_id)
+
+        # 4. 删除 Redis 中的文件信息 (如果存在 file_id)
+        file_id = task_info.get("file_id")
+        if file_id:
+            sync_redis.delete_file(file_id)
+
+        # 5. 从全局任务列表中移除任务ID
+        sync_redis.remove_task_from_global_list(task_id)
+        
+        logger.info(f"Successfully deleted task {task_id} and associated data.")
+        return JSONResponse(content={"code": 200, "message": "Task deleted successfully"})
+
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail="Failed to delete task")
