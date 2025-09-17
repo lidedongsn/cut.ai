@@ -14,7 +14,7 @@
     </div>
 
     <!-- 显示内容 -->
-    <div v-else class="flex-grow p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-hidden">
+    <div v-else :class="['flex-grow p-4 sm:p-8 grid gap-8 overflow-hidden', isVideo ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1']">
       <!-- Left Column: Media Player -->
       <div class="flex flex-col overflow-y-auto">
         <div class="text-2xl font-bold mb-4 flex-shrink-0">AI 转写结果</div>

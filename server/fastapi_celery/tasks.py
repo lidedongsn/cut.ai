@@ -12,8 +12,11 @@ from datetime import datetime
 sync_redis = RedisHandler()
 
 import torch
+
 model = None
 model_name = "small"
+
+
 @app.task(bind=True)
 def process_file_celery(self, file_id):
 
@@ -66,6 +69,7 @@ def process_file_celery(self, file_id):
                 file_info["audio_framerate"] = framerate
         else:
             from pydub import AudioSegment
+
             audio = AudioSegment.from_file(stt_file_name)
             duration = len(audio) / 1000.0
             file_info["audio_length"] = len(audio.get_array_of_samples())
@@ -91,7 +95,6 @@ def process_file_celery(self, file_id):
         )
         T1 = time.time()
         logger.info(f"加载模型耗时：{T1-T0}秒")
-        # 使用 whisper 处理音频识别
         logger.info(f"开始处理文件：{file_path}")
         sync_redis.set_stt_task(
             task_id=task_id,
@@ -105,6 +108,7 @@ def process_file_celery(self, file_id):
         result = model.transcribe(
             file_path,
             fp16=False,
+            temperature=0,
             language="Chinese",
             initial_prompt="以下是简体中文普通话的句子。",
             verbose=False,
@@ -112,13 +116,10 @@ def process_file_celery(self, file_id):
         )
         T2 = time.time()
         logger.info(f"识别耗时：{T2-T1}秒")
-        
-        # 将整个 segments 列表保存，以便前端灵活处理
-        segments = result['segments']
-        # 为了兼容之前的 `text` 字段，依然保存一个格式化后的文本
-        formatted_text = "\n\n".join([s['text'] for s in segments])
 
-        # 生成 SRT 字幕
+        segments = result["segments"]
+        formatted_text = "\n\n".join([s["text"] for s in segments])
+
         sync_redis.set_stt_task(
             task_id=task_id,
             task_info={
@@ -127,7 +128,7 @@ def process_file_celery(self, file_id):
                 "process": "generating_subtitle",
             },
         )
-        # 使用被 whisper 处理的文件名来构造 srt 文件名
+
         base_processed_filename = os.path.basename(file_path)
         srt_filename = f"{base_processed_filename}.srt"
         srt_output_dir = "./result"
@@ -136,14 +137,12 @@ def process_file_celery(self, file_id):
         writer = get_writer("srt", srt_output_dir)
         writer(
             result,
-            srt_filename, # 使用新的 srt 文件名
+            srt_filename,
             # {"highlight_words": True, "max_line_count": 3, "max_line_width": 3},
         )
         T3 = time.time()
         logger.info(f"生成字幕耗时：{T3-T2}秒")
 
-        # 保存识别结果到Redis
-        # 清理临时文件
         # os.remove(file_path)
         logger.info(f"文件处理完毕：{file_path}")
 
@@ -158,13 +157,13 @@ def process_file_celery(self, file_id):
         task_info["status"] = "success"
         task_info["process"] = "completed"
         task_info["cost_time"] = round(T3 - T0, 2)
-        task_info["text"] = formatted_text  # 保存格式化后的文本
-        task_info["segments"] = segments    # 新增：保存 segments 列表
+        task_info["text"] = formatted_text
+        task_info["segments"] = segments
         task_info["state"] = "SUCCESS"
 
         sync_redis.set_stt_task(task_id=task_id, task_info=task_info)
     except Exception as e:
-        logger.exception(e)  # 使用 loguru 记录异常
+        logger.exception(e)
         sync_redis.set_stt_task(
             task_id=task_id,
             task_info={"file_id": file_id, "state": "FAILURE", "process": "failed"},
